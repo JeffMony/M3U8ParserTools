@@ -47,10 +47,12 @@ pip3 install xlrd
 ```
 pip install xlrd
 ```
+excel_function文件夹下面的transfer_excel2txt.py 脚本是将excel文件中的数据读到txt文件中，当然你也可以直接取出来用。
 
-####
-
-
+#### python 解析 m3u8文件
+针对一个m3u8链接，https://cdn3.lajiao-bo.com/20200113/DGKlALM5/index.m3u8
+我们想将它的信息解析出来。
+使用m3u8_fiunction文件夹下面的 parse_m3u8.py工具，解析出来的m3u8信息被存在一个txt中。
 
 **感谢关注我的公众号JeffMony，持续给你带来音视频、算法、互联网资讯方面的分享。**
 ![](./files/JeffMony.jpg)
