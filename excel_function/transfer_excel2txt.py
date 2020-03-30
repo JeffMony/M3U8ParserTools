@@ -1,43 +1,30 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+# 将excel 中信息导入到 txt文件中
+# video-url-all.xlsx是线上提取的视频url的汇总，非常重要的数据
+
 import xlrd
 import sys
-import requests
+import os
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-def responseOk(url):
-    try:
-        request=requests.get(url, timeout=10)
-        code=request.status_code
-        return code
-    except:
-        return -100
+file_path=os.getcwd()+'/excel_files/'
 
-file_path='/Users/jeffmony/sources/M3U8ParserTools/excel_function/files/'
+excel_name='video-url-all.xlsx'
+video_url_all='video-url-all.txt'
 
-excel='video-url-all.xlsx'
-video_url_200='video-url-200.txt'
-video_url_other="video-url-other.txt"
-
-excel_file_str=file_path+excel
+excel_file_str=file_path+excel_name
 excel_data = xlrd.open_workbook(excel_file_str)
 table = excel_data.sheets()[0]
 nrows = table.nrows
 
-video_url_200_file=open(file_path+video_url_200, 'a')
-video_url_other_file=open(file_path+video_url_other, 'a')
+video_url_all_file=open(file_path+video_url_all, 'w')
 
 for index in range(1, nrows):
     item=table.cell(index,1).value
-    code=responseOk(item)
-    if code == 200:
-        video_url_200_file.write(item+'\n')
-    else:
-        video_url_other_file.write(item+'\n')
-    print code, '<---->', item
+    video_url_all_file.write(item+'\n')
 
-video_url_200_file.close()
-video_url_other_file.close();
+video_url_all_file.close()
