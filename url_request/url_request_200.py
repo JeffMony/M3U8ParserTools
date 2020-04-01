@@ -24,6 +24,7 @@ video_file_except_blob_name = file_path + '/video-url-except-blob.txt'
 video_url_except_blob_file = open(video_file_except_blob_name, 'r')
 
 video_url_200_file = open(file_path + '/video-url-200.txt', 'w')
+video_url_except_200_file = open(file_path + '/video-url-except-200.txt', 'w')
 
 line=video_url_except_blob_file.readline()
 while line:
@@ -31,8 +32,11 @@ while line:
     code=responseOk(url)
     if code==200:
         video_url_200_file.write(url+'\n')
+    else:
+        video_url_except_200_file.write(url+'\n')
     print code, '<---->', url
     line=video_url_except_blob_file.readline()
 
 video_url_except_blob_file.close()
 video_url_200_file.close()
+video_url_except_200_file.close()
