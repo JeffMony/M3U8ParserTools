@@ -1,4 +1,8 @@
 #!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
+## 将m3u8文件解析到本地
+
 
 import requests
 
