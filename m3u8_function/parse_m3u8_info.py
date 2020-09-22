@@ -11,15 +11,24 @@ TAG_KEY='#EXT-X-KEY'
 TAG_STREAM_INF='#EXT-X-STREAM-INF'
 TAG_DISCONTINUITY='#EXT-X-DISCONTINUITY'
 
-URL='https://cdn3.lajiao-bo.com/20200113/DGKlALM5/index.m3u8'
+URL='http://video.yjf138.com:8091/20180812/6yl0Q2YZ/index.m3u8'
 
-### 返回最终的m3u8文件
+### 返回m3u8文件,不是最终的
 def parse_m3u8_info(url):
     val = urlparse.urlsplit(url)
     if (val.scheme != 'http') and (val.scheme != 'https'):
         return 'Error protocol'
-    hostUrl = url[0:url.index(val.netloc)+len(val.netloc)]
-    baseUrl = url[0:url.rindex('/')+1]
+    result = ''
+    request = requests.get(url, timeout=20)
+    for line in request.iter_lines():
+        result += line + '\n'
+    return result
+
+### 返回最终的m3u8文件
+def parse_final_m3u8_info(url):
+    val = urlparse.urlsplit(url)
+    if (val.scheme != 'http') and (val.scheme != 'https'):
+        return 'Error protocol'
     request = requests.get(url, timeout=20)
     result = ''
     hasStreamInf = False
@@ -30,7 +39,7 @@ def parse_m3u8_info(url):
                 hasStreamInf = True
             continue
         if (hasStreamInf):
-            return parse_m3u8_info(get_final_url(url, line))
+            return parse_final_m3u8_info(get_final_url(url, line))
         hasStreamInf = False
         result += get_final_url(url, line) + '\n'
     return result
@@ -42,17 +51,18 @@ def get_final_url(url, line):
     baseUrl = url[0:url.rindex('/')+1]
     if (line.startswith('/')):
         tempUrl = ''
-        tempIndex = line.index('/', 1)
-        if (tempIndex == -1):
-            tempUrl = baseUrl + line[1:]
-        else:
+        if (line[1:].find('/') != -1):
+            tempIndex = line[1:].index('/')
             tempUrl = line[0:tempIndex]
-            tempIndex = url.index(tempUrl)
-            if (tempIndex == -1):
-                tempUrl = hostUrl + line[1:]
-            else:
+            if (url.find(tempUrl) != -1):
+                tempIndex = url.index(tempUrl)
                 tempUrl = url[0:tempIndex] + line
+            else:
+                tempUrl = hostUrl + line[1:]
             return tempUrl
+        else:
+            tempUrl = baseUrl + line[1:]
+        return tempUrl
     if (line.startswith('http://') or line.startswith('https://')):
         return line
     return baseUrl + line
@@ -109,6 +119,9 @@ def has_ext_discontinuity(url):
 
 result = parse_m3u8_info(URL)
 print('M3U8文件内容如下:\n' + result)
+
+final_result = parse_final_m3u8_info(URL)
+print('M3U8文件最终内容如下:\n' + final_result)
 
 hasExtStream = has_ext_stream(URL)
 print('是否存在多路流: ---> ' + str(hasExtStream))
