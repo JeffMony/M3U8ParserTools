@@ -9,6 +9,7 @@ PLAYLIST_HEADER='#EXTM3U'
 TAG_ENDLIST='#EXT-X-ENDLIST'
 TAG_KEY='#EXT-X-KEY'
 TAG_STREAM_INF='#EXT-X-STREAM-INF'
+TAG_DISCONTINUITY='#EXT-X-DISCONTINUITY'
 
 URL='https://cdn3.lajiao-bo.com/20200113/DGKlALM5/index.m3u8'
 
@@ -74,10 +75,36 @@ def has_ext_key(url):
     if (val.scheme != 'http') and (val.scheme != 'https'):
         return 'Error protocol'
     request = requests.get(url, timeout=20)
+    hasStreamInf = False
     for line in request.iter_lines():
         if (line.startswith(TAG_PREFIX)):
-            if (line.startswith(TAG_KEY)):
+            if (line.startswith(TAG_STREAM_INF)):
+                hasStreamInf = True
+            elif (line.startswith(TAG_KEY)):
                 return True
+            continue
+        if (hasStreamInf):
+            return has_ext_key(get_final_url(url, line))
+        hasStreamInf = False
+    return False
+
+### 判断m3u8中是否存在#EXT-X-DISCONTINUITY
+def has_ext_discontinuity(url):
+    val = urlparse.urlsplit(url)
+    if (val.scheme != 'http') and (val.scheme != 'https'):
+        return 'Error protocol'
+    request = requests.get(url, timeout=20)
+    hasStreamInf = False
+    for line in request.iter_lines():
+        if (line.startswith(TAG_PREFIX)):
+            if (line.startswith(TAG_STREAM_INF)):
+                hasStreamInf = True
+            elif (line.startswith(TAG_DISCONTINUITY)):
+                return True
+            continue
+        if (hasStreamInf):
+            return has_ext_key(get_final_url(url, line))
+        hasStreamInf = False
     return False
 
 result = parse_m3u8_info(URL)
@@ -88,4 +115,7 @@ print('是否存在多路流: ---> ' + str(hasExtStream))
 
 hasExtKey = has_ext_key(URL)
 print('是否存在key: ---> ' + str(hasExtKey))
+
+hasDisContinuity = has_ext_discontinuity(URL)
+print('是否存在不连续的 : ---> ' + str(hasDisContinuity))
 
