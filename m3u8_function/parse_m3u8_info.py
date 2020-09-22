@@ -3,13 +3,19 @@
 
 import requests
 import urlparse
+import re
 
-TAG_PREFIX='#EXT'
-PLAYLIST_HEADER='#EXTM3U'
-TAG_ENDLIST='#EXT-X-ENDLIST'
-TAG_KEY='#EXT-X-KEY'
-TAG_STREAM_INF='#EXT-X-STREAM-INF'
-TAG_DISCONTINUITY='#EXT-X-DISCONTINUITY'
+### M3U8 Tag
+TAG_PREFIX = '#EXT'
+PLAYLIST_HEADER = '#EXTM3U'
+TAG_ENDLIST = '#EXT-X-ENDLIST'
+TAG_KEY = '#EXT-X-KEY'
+TAG_MEDIA_DURATION = "#EXTINF";
+TAG_STREAM_INF = '#EXT-X-STREAM-INF'
+TAG_DISCONTINUITY = '#EXT-X-DISCONTINUITY'
+
+### M3U8 Pattern Tag
+REGEX_MEDIA_DURATION = TAG_MEDIA_DURATION + ':([\\d\\.]+)\\b'
 
 URL='http://video.yjf138.com:8091/20180812/6yl0Q2YZ/index.m3u8'
 
@@ -117,11 +123,40 @@ def has_ext_discontinuity(url):
         hasStreamInf = False
     return False
 
+### 获取M3U8文件的总时长
+def get_total_duration(url):
+    val = urlparse.urlsplit(url)
+    if (val.scheme != 'http') and (val.scheme != 'https'):
+        return 'Error protocol'
+    request = requests.get(url, timeout=20)
+    result = ''
+    hasStreamInf = False
+    totalDuration = 0
+    for line in request.iter_lines():
+        if (line.startswith(TAG_PREFIX)):
+            if (line.startswith(TAG_STREAM_INF)):
+                hasStreamInf = True
+            elif (line.startswith(TAG_MEDIA_DURATION)):
+                ret = parse_pattern_str(REGEX_MEDIA_DURATION, line)
+                totalDuration += float(ret)
+            continue
+        if (hasStreamInf):
+            return get_total_duration(get_final_url(url, line))
+        hasStreamInf = False
+    return totalDuration
+
+def parse_pattern_str(pattern_str, str):
+    matchObj = re.match(pattern_str, str)
+    if (matchObj) :
+        return matchObj.group(1)
+    return ''
+
+
 result = parse_m3u8_info(URL)
 print('M3U8文件内容如下:\n' + result)
 
-final_result = parse_final_m3u8_info(URL)
-print('M3U8文件最终内容如下:\n' + final_result)
+finalResult = parse_final_m3u8_info(URL)
+print('M3U8文件最终内容如下:\n' + finalResult)
 
 hasExtStream = has_ext_stream(URL)
 print('是否存在多路流: ---> ' + str(hasExtStream))
@@ -131,4 +166,7 @@ print('是否存在key: ---> ' + str(hasExtKey))
 
 hasDisContinuity = has_ext_discontinuity(URL)
 print('是否存在不连续的 : ---> ' + str(hasDisContinuity))
+
+totalDuration = get_total_duration(URL)
+print('此M3U8文件的总时间: --->' + str(totalDuration))
 
